@@ -6,10 +6,9 @@
  */
 
 import React, { Component } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, Text } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { RecyclerListView, DataProvider } from "recyclerlistview";
-import Spinner from 'react-native-loading-spinner-overlay';
 import LayoutUtil from './LayoutUtil';
 import Unsplash from 'unsplash-js/native';
 
@@ -30,7 +29,6 @@ export default class App extends Component {
       layoutProvider: LayoutUtil.getLayoutProvider(1),
       imageList: [],
       page: 1,
-      visible: true,
       inProgressNetworkReq: false
     };
   };
@@ -38,10 +36,10 @@ export default class App extends Component {
   getImageList = async () => {
     let { page, dataProvider, imageList } = this.state;
     this.setState({ inProgressNetworkReq: true });
-    let response = await unsplash.photos.listPhotos(page, 10, "popular");
+    let response = await unsplash.photos.listPhotos(page, 20, "popular");
     let { _bodyInit } = response;
     let newList = [...imageList, ...JSON.parse(_bodyInit)];
-    this.setState({ visible: false, inProgressNetworkReq: false, dataProvider: dataProvider.cloneWithRows(newList), imageList: newList, page: page + 1 });
+    this.setState({ inProgressNetworkReq: false, dataProvider: dataProvider.cloneWithRows(newList), imageList: newList, page: page + 1 });
   };
 
   componentDidMount() {
@@ -72,11 +70,13 @@ export default class App extends Component {
 
   render() {
 
-    const { dataProvider, layoutProvider, visible } = this.state;
+    const { dataProvider, layoutProvider, imageList } = this.state;
 
     return (
       <View style={styles.container}>
-        <Spinner visible={visible} textContent={"Loading ..."} />
+        <Text style={styles.headline}>
+          Image Count - {imageList.length}
+        </Text>
         <RecyclerListView
           style={styles.listView}
           onEndReached={this.getImageList}
@@ -84,6 +84,7 @@ export default class App extends Component {
           layoutProvider={layoutProvider}
           rowRenderer={this.renderItem}
           renderFooter={this.renderFooter}
+          renderAheadOffset={1000}
         />
       </View>
     );
@@ -95,6 +96,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between'
+  },
+  headline: {
+    textAlign: 'center',
+    fontWeight: 'bold'
   },
   listView: {
     flex: 1,
