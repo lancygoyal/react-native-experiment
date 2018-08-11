@@ -7,9 +7,8 @@
 
 import React, { Component } from "react";
 import { ActivityIndicator, StyleSheet, View, Text } from "react-native";
+import GridView from 'react-native-super-grid';
 import FastImage from "react-native-fast-image";
-import { RecyclerListView, DataProvider } from "recyclerlistview";
-import LayoutUtil from "./LayoutUtil";
 import Unsplash from "unsplash-js/native";
 
 const unsplash = new Unsplash({
@@ -23,10 +22,6 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      dataProvider: new DataProvider((r1, r2) => {
-        return r1 !== r2;
-      }),
-      layoutProvider: LayoutUtil.getLayoutProvider(1),
       imageList: [],
       page: 1,
       inProgressNetworkReq: false
@@ -34,14 +29,13 @@ export default class App extends Component {
   }
 
   getImageList = async () => {
-    let { page, dataProvider, imageList } = this.state;
+    let { page, imageList } = this.state;
     this.setState({ inProgressNetworkReq: true });
-    let response = await unsplash.photos.listPhotos(page, 20, "popular");
-    let { _bodyInit } = response;
-    let newList = [...imageList, ...JSON.parse(_bodyInit)];
+    let response = await unsplash.photos.listPhotos(page, 10, "popular");
+    let result = await response.json();
+    let newList = [...imageList, ...result];
     this.setState({
       inProgressNetworkReq: false,
-      dataProvider: dataProvider.cloneWithRows(newList),
       imageList: newList,
       page: page + 1
     });
@@ -51,14 +45,14 @@ export default class App extends Component {
     this.getImageList();
   }
 
-  renderItem = (type, item) => {
+  renderItem = (item) => {
     return (
       <FastImage
+        key={item.id}
         style={styles.itemContainer}
         source={{
           uri: item.urls.full,
-          priority: FastImage.priority.normal,
-          cache: FastImage.priority.web
+          priority: FastImage.priority.high
         }}
         resizeMode={FastImage.resizeMode.contain}
       />
@@ -74,20 +68,21 @@ export default class App extends Component {
   };
 
   render() {
-    const { dataProvider, layoutProvider, imageList } = this.state;
+    const { imageList } = this.state;
 
     return (
       <View style={styles.container}>
         <Text style={styles.headline}>Image Count - {imageList.length}</Text>
-        <RecyclerListView
-          style={styles.listView}
-          onEndReached={this.getImageList}
-          dataProvider={dataProvider}
-          layoutProvider={layoutProvider}
-          rowRenderer={this.renderItem}
-          renderFooter={this.renderFooter}
-          renderAheadOffset={500}
-        />
+        <GridView
+        itemDimension={130}
+        items={imageList}
+        style={styles.gridView}
+        onEndReached={this.getImageList}
+        onEndReachedThreshold={0.9}
+        renderItem={this.renderItem}
+        ListFooterComponent={this.renderFooter}
+        removeClippedSubviews={true}
+      />
       </View>
     );
   }
@@ -102,18 +97,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
     marginTop: 20,
-    marginBottom: 10
+    marginBottom: 5
   },
-  listView: {
+  gridView: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 5
+    paddingVertical: 5
   },
   itemContainer: {
     flex: 1,
-    margin: 5,
+    // margin: 5,
     borderRadius: 5,
-    height: 150,
+    height: 130,
     backgroundColor: "lightgrey"
   }
 });

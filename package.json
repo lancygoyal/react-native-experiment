@@ -12,7 +12,7 @@
     "reload": "adb shell input keyevent 82",
     "ios": "react-native run-ios",
     "android": "react-native run-android",
-    "reset": "watchman watch-del-all",
+    "reset": "watchman watch-del-all && rm -rf ~/.rncache",
     "ri": "rm -rf node_modules && npm install",
     "internet-on": "sudo ifconfig en0 up",
     "internet-off": "sudo ifconfig en0 down",
