@@ -6,7 +6,15 @@
  */
 
 import React, { Component } from "react";
-import { ActivityIndicator, StyleSheet, View, Text } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  Platform
+} from "react-native";
+// import Image from "react-native-image-progress";
 import FastImage from "react-native-fast-image";
 import { RecyclerListView, DataProvider } from "recyclerlistview";
 import LayoutUtil from "./LayoutUtil";
@@ -17,6 +25,37 @@ const unsplash = new Unsplash({
     "5735d1714b6f459d166a3ea3421e79ebae43ba1e9203a5a7c4617cc3d4801e97",
   secret: "a20b2e3490da7927110a738bcec398afd94f0e43ec508fec76357e7ca61868d9",
   callbackUrl: "urn:ietf:wg:oauth:2.0:oob"
+});
+
+const renderAndroidItem = (type, item) => (
+  <FastImage
+    style={styles.itemContainer}
+    source={{
+      uri: item.urls.full
+    }}
+    resizeMode={FastImage.resizeMode.contain}
+  />
+);
+
+const renderIOSItem = (type, item) => (
+  <Image
+    style={styles.itemContainer}
+    source={{
+      uri: item.urls.full,
+      cache: "force-cache"
+    }}
+    resizeMode="contain"
+  />
+);
+
+const renderItem = Platform.select({
+  ios: renderIOSItem,
+  android: renderAndroidItem
+});
+
+const disableRecycling = Platform.select({
+  ios: true,
+  android: false
 });
 
 export default class App extends Component {
@@ -51,20 +90,6 @@ export default class App extends Component {
     this.getImageList();
   }
 
-  renderItem = (type, item) => {
-    return (
-      <FastImage
-        style={styles.itemContainer}
-        source={{
-          uri: item.urls.full,
-          priority: FastImage.priority.normal,
-          cache: FastImage.priority.web
-        }}
-        resizeMode={FastImage.resizeMode.contain}
-      />
-    );
-  };
-
   renderFooter = () => {
     return this.state.inProgressNetworkReq ? (
       <ActivityIndicator style={{ margin: 10 }} />
@@ -84,9 +109,9 @@ export default class App extends Component {
           onEndReached={this.getImageList}
           dataProvider={dataProvider}
           layoutProvider={layoutProvider}
-          rowRenderer={this.renderItem}
+          rowRenderer={renderItem}
           renderFooter={this.renderFooter}
-          renderAheadOffset={500}
+          disableRecycling={disableRecycling}
         />
       </View>
     );
